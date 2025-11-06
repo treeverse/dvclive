@@ -2,7 +2,6 @@ import csv
 import os
 import time
 from pathlib import Path
-from typing import List
 
 from .base import Data
 from .utils import NUMPY_SCALARS
@@ -16,12 +15,10 @@ class Metric(Data):
     def could_log(val: object) -> bool:
         if isinstance(val, (int, float, str)):
             return True
-        if (
+        return (
             val.__class__.__module__ == "numpy"
             and val.__class__.__name__ in NUMPY_SCALARS
-        ):
-            return True
-        return False
+        )
 
     @property
     def output_path(self) -> Path:
@@ -46,5 +43,5 @@ class Metric(Data):
             writer.writerow(row)
 
     @property
-    def summary_keys(self) -> List[str]:
+    def summary_keys(self) -> list[str]:
         return os.path.normpath(self.name).split(os.path.sep)

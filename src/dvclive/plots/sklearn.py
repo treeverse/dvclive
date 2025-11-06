@@ -8,9 +8,7 @@ class SKLearnPlot(CustomPlot):
 
     @staticmethod
     def could_log(val: object) -> bool:
-        if isinstance(val, tuple) and len(val) == 2:  # noqa: PLR2004
-            return True
-        return False
+        return isinstance(val, tuple) and len(val) == 2  # noqa: PLR2004
 
 
 class Roc(SKLearnPlot):

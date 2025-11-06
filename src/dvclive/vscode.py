@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 from dvclive.dvc import _find_dvc_root
 from dvclive.utils import StrPath
@@ -26,7 +26,7 @@ def _find_non_queue_root() -> Optional[str]:
     return os.getenv(env.DVC_ROOT) or _find_dvc_root()
 
 
-def _write_file(file: str, contents: Dict[str, Union[str, int]]):
+def _write_file(file: str, contents: dict[str, Union[str, int]]):
     import builtins
 
     with builtins.open(file, "w", encoding="utf-8") as fobj:

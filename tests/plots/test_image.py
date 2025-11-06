@@ -54,7 +54,7 @@ def test_invalid_extension(tmp_dir):
     live = Live()
     img = Image.new("RGB", (10, 10), (250, 250, 250))
     with pytest.raises(
-        InvalidImageNameError, match="Cannot log image with name 'image.foo'"
+        InvalidImageNameError, match="Cannot log image with name 'image\\.foo'"
     ):
         live.log_image("image.foo", img)
 

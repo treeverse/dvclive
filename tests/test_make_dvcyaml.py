@@ -1,8 +1,8 @@
 import os
+from pathlib import Path
 
 import pytest
 from PIL import Image
-from pathlib import Path
 
 from dvclive import Live
 from dvclive.dvc import make_dvcyaml

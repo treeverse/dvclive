@@ -44,9 +44,7 @@ class CustomPlot(Data):
 
     @staticmethod
     def could_log(val: object) -> bool:
-        if isinstance(val, list) and all(isinstance(x, dict) for x in val):
-            return True
-        return False
+        return isinstance(val, list) and all(isinstance(x, dict) for x in val)
 
     @property
     def plot_config(self):

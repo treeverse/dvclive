@@ -1,21 +1,21 @@
 import logging
 import os
-from typing import Dict, Union, Tuple
-
-import psutil
 from statistics import mean
 from threading import Event, Thread
+from typing import Union
+
+import psutil
 from funcy import merge_with
 
 try:
     from pynvml import (
-        nvmlInit,
+        NVMLError,
         nvmlDeviceGetCount,
         nvmlDeviceGetHandleByIndex,
         nvmlDeviceGetMemoryInfo,
         nvmlDeviceGetUtilizationRates,
+        nvmlInit,
         nvmlShutdown,
-        NVMLError,
     )
 
     GPU_AVAILABLE = True
@@ -47,7 +47,7 @@ METRIC_VRAM_TOTAL_GB = "system/vram/total (GB)"
 
 
 class _SystemMonitor:
-    _plot_blacklist_prefix: Tuple = (
+    _plot_blacklist_prefix: tuple = (
         METRIC_CPU_COUNT,
         METRIC_RAM_TOTAL_GB,
         METRIC_DISK_TOTAL_GB,
@@ -60,7 +60,7 @@ class _SystemMonitor:
         live,
         interval: float,  # seconds
         num_samples: int,
-        directories_to_monitor: Dict[str, str],
+        directories_to_monitor: dict[str, str],
     ):
         self._live = live
         self._interval = self._check_interval(interval, max_interval=0.1)
@@ -72,7 +72,7 @@ class _SystemMonitor:
         )
         self._warn_cpu_problem = True
         self._warn_gpu_problem = True
-        self._warn_disk_doesnt_exist: Dict[str, bool] = {}
+        self._warn_disk_doesnt_exist: dict[str, bool] = {}
 
         self._shutdown_event = Event()
         Thread(
@@ -102,8 +102,8 @@ class _SystemMonitor:
         return num_samples
 
     def _check_directories_to_monitor(
-        self, directories_to_monitor: Dict[str, str]
-    ) -> Dict[str, str]:
+        self, directories_to_monitor: dict[str, str]
+    ) -> dict[str, str]:
         disks_to_monitor = {}
         for disk_name, disk_path in directories_to_monitor.items():
             if disk_name != os.path.normpath(disk_name):
@@ -145,7 +145,7 @@ class _SystemMonitor:
                     plot=None if blacklisted else True,
                 )
 
-    def _get_metrics(self) -> Dict[str, Union[float, int]]:
+    def _get_metrics(self) -> dict[str, Union[float, int]]:
         return {
             **self._get_gpu_info(),
             **self._get_cpu_info(),
@@ -153,7 +153,7 @@ class _SystemMonitor:
             **self._get_disk_info(),
         }
 
-    def _get_ram_info(self) -> Dict[str, Union[float, int]]:
+    def _get_ram_info(self) -> dict[str, Union[float, int]]:
         ram_info = psutil.virtual_memory()
         return {
             METRIC_RAM_USAGE_PERCENT: ram_info.percent,
@@ -161,7 +161,7 @@ class _SystemMonitor:
             METRIC_RAM_TOTAL_GB: ram_info.total / GIGABYTES_DIVIDER,
         }
 
-    def _get_cpu_info(self) -> Dict[str, Union[float, int]]:
+    def _get_cpu_info(self) -> dict[str, Union[float, int]]:
         num_cpus = psutil.cpu_count()
         cpus_percent = psutil.cpu_percent(percpu=True)
         return {
@@ -178,7 +178,7 @@ class _SystemMonitor:
             / num_cpus,
         }
 
-    def _get_disk_info(self) -> Dict[str, Union[float, int]]:
+    def _get_disk_info(self) -> dict[str, Union[float, int]]:
         result = {}
         for disk_name, disk_path in self._disks_to_monitor.items():
             try:
@@ -201,7 +201,7 @@ class _SystemMonitor:
             result.update(disk_metrics)
         return result
 
-    def _get_gpu_info(self) -> Dict[str, Union[float, int]]:
+    def _get_gpu_info(self) -> dict[str, Union[float, int]]:
         if not GPU_AVAILABLE:
             return {}
 

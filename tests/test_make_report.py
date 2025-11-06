@@ -5,9 +5,8 @@ from PIL import Image
 from dvclive import Live
 from dvclive.env import DVCLIVE_OPEN
 from dvclive.error import InvalidReportModeError
-from dvclive.plots import CustomPlot
+from dvclive.plots import CustomPlot, Metric
 from dvclive.plots import Image as LiveImage
-from dvclive.plots import Metric
 from dvclive.plots.sklearn import SKLearnPlot
 from dvclive.report import (
     get_custom_plot_renderers,
@@ -85,7 +84,7 @@ def test_report_init(monkeypatch, mocker):
     live = Live(report="html")
     assert live._report_mode == "html"
 
-    with pytest.raises(InvalidReportModeError, match="Got foo instead."):
+    with pytest.raises(InvalidReportModeError, match="Got foo instead\\."):
         Live(report="foo")
 
 

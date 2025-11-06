@@ -25,9 +25,7 @@ class Image(Data):
         for cls in type(val).mro():
             if any(isinstance_without_import(val, *cls) for cls in acceptable):
                 return True
-        if isinstance(val, (PurePath, str)):
-            return True
-        return False
+        return isinstance(val, (PurePath, str))
 
     def dump(self, val, **kwargs) -> None:  # noqa: ARG002
         if isinstance_without_import(val, "numpy", "ndarray"):
