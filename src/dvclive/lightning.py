@@ -1,7 +1,8 @@
 # mypy: disable-error-code="no-redef"
 import inspect
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Optional, Union
 
 from typing_extensions import override
 
@@ -11,14 +12,18 @@ try:
     from lightning.pytorch.loggers.utilities import _scan_checkpoints
     from lightning.pytorch.utilities import rank_zero_only
 except ImportError:
-    from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint  # type: ignore[assignment]
+    from pytorch_lightning.callbacks.model_checkpoint import (  # type: ignore[assignment]
+        ModelCheckpoint,
+    )
     from pytorch_lightning.loggers.logger import Logger  # type: ignore[assignment]
     from pytorch_lightning.utilities import rank_zero_only
 
     try:
         from pytorch_lightning.utilities.logger import _scan_checkpoints
     except ImportError:
-        from pytorch_lightning.loggers.utilities import _scan_checkpoints  # type: ignore[assignment]
+        from pytorch_lightning.loggers.utilities import (  # type: ignore[assignment]
+            _scan_checkpoints,
+        )
 
 
 from dvclive.fabric import DVCLiveLogger as FabricDVCLiveLogger
@@ -58,9 +63,9 @@ class DVCLiveLogger(Logger, FabricDVCLiveLogger):
             **kwargs,
         )
         self._log_model = log_model
-        self._logged_model_time: Dict[str, float] = {}
+        self._logged_model_time: dict[str, float] = {}
         self._checkpoint_callback: Optional[ModelCheckpoint] = None
-        self._all_checkpoint_paths: List[str] = []
+        self._all_checkpoint_paths: list[str] = []
 
     @rank_zero_only
     def log_metrics(

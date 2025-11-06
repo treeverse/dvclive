@@ -3,19 +3,21 @@ import base64
 import logging
 import math
 import os
+from collections.abc import Mapping
 from pathlib import PureWindowsPath
-from typing import TYPE_CHECKING, Any, Literal, Mapping, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 from dvc.exceptions import DvcException
 from dvc_studio_client.config import get_studio_config
 from dvc_studio_client.post_live_metrics import post_live_metrics
 
+from dvclive.utils import StrPath, rel_path
+
 from .utils import catch_and_warn
 
 if TYPE_CHECKING:
-    from dvclive.plots.image import Image
     from dvclive.live import Live
-from dvclive.utils import rel_path, StrPath
+    from dvclive.plots.image import Image
 
 logger = logging.getLogger("dvclive")
 
@@ -93,7 +95,7 @@ def get_dvc_studio_config(live: "Live"):
 
 
 def increment_num_points_sent_to_studio(live, plots_sent, data):
-    for name, _ in data["plots"].items():
+    for name in data["plots"]:
         path = _adapt_path(live, name)
         plot = plots_sent.get(path, {})
         if "data" in plot:
@@ -120,7 +122,7 @@ def post_to_studio(  # noqa: C901
     elif event == "data":
         assert data is not None  # noqa: S101
         metrics, params, plots = _get_studio_updates(live, data)
-        kwargs["step"] = data["step"]  # type: ignore
+        kwargs["step"] = data["step"]
         kwargs["metrics"] = metrics
         kwargs["params"] = params
         kwargs["plots"] = plots
@@ -130,11 +132,11 @@ def post_to_studio(  # noqa: C901
     response = post_live_metrics(
         event,
         live._baseline_rev,
-        live._exp_name,  # type: ignore
+        live._exp_name,  # type: ignore[arg-type]
         "dvclive",
         dvc_studio_config=live._dvc_studio_config,
         studio_repo_url=live._repo_url,
-        **kwargs,  # type: ignore
+        **kwargs,  # type: ignore[arg-type]
     )
 
     if not response:

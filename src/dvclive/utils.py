@@ -3,10 +3,10 @@ import json
 import os
 import re
 import shutil
+import webbrowser
 from pathlib import Path, PurePath
 from platform import uname
-from typing import Union, List, Dict, TYPE_CHECKING
-import webbrowser
+from typing import TYPE_CHECKING, Union
 
 from .error import InvalidDataTypeError
 
@@ -54,7 +54,7 @@ def env2bool(var, undefined=False):
     var = os.getenv(var, None)
     if var is None:
         return undefined
-    return bool(re.search("1|y|yes|true", var, flags=re.I))
+    return bool(re.search("1|y|yes|true", var, flags=re.IGNORECASE))
 
 
 def standardize_metric_name(metric_name: str, framework: str) -> str:
@@ -118,7 +118,7 @@ def parse_metrics(live):
 
 def matplotlib_installed() -> bool:
     try:
-        import matplotlib  # noqa: F401
+        import matplotlib as mpl  # noqa: F401
     except ImportError:
         return False
     return True
@@ -214,8 +214,8 @@ def read_latest(live, metric_name):
 
 
 def convert_datapoints_to_list_of_dicts(
-    datapoints: Union[List[Dict], "pd.DataFrame", "np.ndarray"],
-) -> List[Dict]:
+    datapoints: Union[list[dict], "pd.DataFrame", "np.ndarray"],
+) -> list[dict]:
     """
     Convert the given datapoints to a list of dictionaries.
 

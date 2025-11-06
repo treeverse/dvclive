@@ -1,28 +1,28 @@
 import time
 from pathlib import Path
-import pytest
 
 import dpath
+import pytest
 from pytest_voluptuous import S
 
 from dvclive import Live
 from dvclive.monitor_system import (
-    _SystemMonitor,
+    GIGABYTES_DIVIDER,
     METRIC_CPU_COUNT,
-    METRIC_CPU_USAGE_PERCENT,
     METRIC_CPU_PARALLELIZATION_PERCENT,
-    METRIC_RAM_USAGE_PERCENT,
-    METRIC_RAM_USAGE_GB,
-    METRIC_RAM_TOTAL_GB,
-    METRIC_DISK_USAGE_PERCENT,
-    METRIC_DISK_USAGE_GB,
+    METRIC_CPU_USAGE_PERCENT,
     METRIC_DISK_TOTAL_GB,
+    METRIC_DISK_USAGE_GB,
+    METRIC_DISK_USAGE_PERCENT,
     METRIC_GPU_COUNT,
     METRIC_GPU_USAGE_PERCENT,
-    METRIC_VRAM_USAGE_PERCENT,
-    METRIC_VRAM_USAGE_GB,
+    METRIC_RAM_TOTAL_GB,
+    METRIC_RAM_USAGE_GB,
+    METRIC_RAM_USAGE_PERCENT,
     METRIC_VRAM_TOTAL_GB,
-    GIGABYTES_DIVIDER,
+    METRIC_VRAM_USAGE_GB,
+    METRIC_VRAM_USAGE_PERCENT,
+    _SystemMonitor,
 )
 from dvclive.utils import parse_metrics
 

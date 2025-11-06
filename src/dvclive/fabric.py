@@ -1,6 +1,7 @@
 # mypy: disable-error-code="no-redef"
 from argparse import Namespace
-from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Union
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 try:
     from lightning.fabric.loggers.logger import Logger, rank_zero_experiment
@@ -11,7 +12,10 @@ try:
     )
     from lightning.fabric.utilities.rank_zero import rank_zero_only
 except ImportError:
-    from lightning_fabric.loggers.logger import Logger, rank_zero_experiment  # type: ignore[assignment]
+    from lightning_fabric.loggers.logger import (  # type: ignore[assignment]
+        Logger,
+        rank_zero_experiment,
+    )
     from lightning_fabric.utilities.logger import (
         _add_prefix,
         _convert_params,
@@ -105,7 +109,7 @@ class DVCLiveLogger(Logger):
             self.experiment.sync()
 
     @rank_zero_only
-    def log_hyperparams(self, params: Union[Dict[str, Any], Namespace]) -> None:
+    def log_hyperparams(self, params: Union[dict[str, Any], Namespace]) -> None:
         """Record hyperparameters.
 
         Args:
@@ -122,7 +126,7 @@ class DVCLiveLogger(Logger):
             self.experiment.end()
 
     @staticmethod
-    def _sanitize_params(params: Union[Dict[str, Any], Namespace]) -> Dict[str, Any]:
+    def _sanitize_params(params: Union[dict[str, Any], Namespace]) -> dict[str, Any]:
         from argparse import Namespace
 
         # logging of arrays with dimension > 1 is not supported, sanitize as string
@@ -138,7 +142,7 @@ class DVCLiveLogger(Logger):
 
         return params  # noqa: RET504
 
-    def __getstate__(self) -> Dict[str, Any]:
+    def __getstate__(self) -> dict[str, Any]:
         state = self.__dict__.copy()
         state["_experiment"] = None
         return state

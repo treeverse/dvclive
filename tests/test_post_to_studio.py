@@ -1,10 +1,10 @@
+import time
+import unittest
 from collections import defaultdict
 from copy import deepcopy
 from pathlib import Path
-import unittest
 
 import pytest
-import time
 from dvc.env import DVC_EXP_GIT_REMOTE
 from dvc_studio_client import DEFAULT_STUDIO_URL
 from dvc_studio_client.env import DVC_STUDIO_REPO_URL, DVC_STUDIO_TOKEN
@@ -23,9 +23,7 @@ def get_studio_call(event_type, exp_name, **kwargs):
         "repo_url": "STUDIO_REPO_URL",
         "baseline_sha": kwargs.pop("baseline_sha", None) or "f" * 40,
         "client": "dvclive",
-    }
-    for key, value in kwargs.items():
-        data[key] = value
+    } | kwargs
 
     return {
         "json": data,

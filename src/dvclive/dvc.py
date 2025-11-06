@@ -3,7 +3,7 @@ import copy
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from dvclive import env
 from dvclive.plots import Image, Metric
@@ -63,7 +63,7 @@ def make_dvcyaml(live) -> None:  # noqa: C901
         dvcyaml["params"] = [rel_path(live.params_file, dvcyaml_dir)]
     if live._metrics or live.summary:
         dvcyaml["metrics"] = [rel_path(live.metrics_file, dvcyaml_dir)]
-    plots: List[Any] = []
+    plots: list[Any] = []
     plots_path = Path(live.plots_dir)
     plots_metrics_path = plots_path / Metric.subfolder
     if plots_metrics_path.exists():
@@ -81,7 +81,7 @@ def make_dvcyaml(live) -> None:  # noqa: C901
 
     if live._artifacts:
         dvcyaml["artifacts"] = copy.deepcopy(live._artifacts)
-        for artifact in dvcyaml["artifacts"].values():  # type: ignore
+        for artifact in dvcyaml["artifacts"].values():  # type: ignore[attr-defined]
             artifact["path"] = rel_path(artifact["path"], dvcyaml_dir)
 
     if not os.path.exists(live.dvc_file):
@@ -90,7 +90,7 @@ def make_dvcyaml(live) -> None:  # noqa: C901
         update_dvcyaml(live, dvcyaml)
 
 
-def update_dvcyaml(live, updates):  # noqa: C901
+def update_dvcyaml(live, updates):
     from dvc.utils.serialize import modify_yaml
 
     dvcyaml_dir = os.path.abspath(os.path.dirname(live.dvc_file))
@@ -120,10 +120,11 @@ def update_dvcyaml(live, updates):  # noqa: C901
         orig = _update_entries(orig, updates, "params")  # noqa: PLW2901
         orig = _update_entries(orig, updates, "metrics")  # noqa: PLW2901
         orig = _update_entries(orig, updates, "plots")  # noqa: PLW2901
-        old_artifacts = {}
-        for name, meta in orig.get("artifacts", {}).items():
-            if dvclive_dir not in meta.get("path", dvclive_dir):
-                old_artifacts[name] = meta
+        old_artifacts = {
+            name: meta
+            for name, meta in orig.get("artifacts", {}).items()
+            if dvclive_dir not in meta.get("path", dvclive_dir)
+        }
         orig["artifacts"] = {**old_artifacts, **updates.get("artifacts", {})}
         if not orig["artifacts"]:
             del orig["artifacts"]

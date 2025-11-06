@@ -4,19 +4,17 @@ import json
 import logging
 import math
 import os
-import shutil
 import queue
+import shutil
 import tempfile
 import threading
-
 from pathlib import Path, PurePath
-from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, Literal
-
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 if TYPE_CHECKING:
+    import matplotlib as mpl
     import numpy as np
     import pandas as pd
-    import matplotlib
     import PIL
     from dvc.repo import Repo
     from IPython.display import DisplayHandle
@@ -42,11 +40,11 @@ from .error import (
     InvalidPlotTypeError,
     InvalidReportModeError,
 )
+from .monitor_system import _SystemMonitor
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
-from .monitor_system import _SystemMonitor
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -72,7 +70,7 @@ formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
+ParamLike = Union[int, float, str, bool, list["ParamLike"], dict[str, "ParamLike"]]
 
 NULL_SHA: str = "0" * 40
 
@@ -82,7 +80,7 @@ class Live:
         self,
         dir: str = "dvclive",  # noqa: A002
         resume: bool = False,
-        report: Literal["md", "notebook", "html", None] = None,
+        report: Optional[Literal["md", "notebook", "html"]] = None,
         save_dvc_exp: bool = True,
         dvcyaml: Union[str, os.PathLike, bool, None] = "dvc.yaml",
         cache_images: bool = False,
@@ -130,17 +128,17 @@ class Live:
             monitor_system (bool): if `True`, DVCLive will monitor GPU, CPU, ram, and
                 disk usage. Defaults to `False`.
         """
-        self.summary: Dict[str, Any] = {}
+        self.summary: dict[str, Any] = {}
 
         self._dir: str = dir
         self._resume: bool = resume or env2bool(env.DVCLIVE_RESUME)
         self._save_dvc_exp: bool = save_dvc_exp
         self._step: Optional[int] = None
-        self._metrics: Dict[str, Any] = {}
-        self._images: Dict[str, Image] = {}
-        self._params: Dict[str, Any] = {}
-        self._plots: Dict[str, Any] = {}
-        self._artifacts: Dict[str, Dict] = {}
+        self._metrics: dict[str, Any] = {}
+        self._images: dict[str, Image] = {}
+        self._params: dict[str, Any] = {}
+        self._plots: dict[str, Any] = {}
+        self._artifacts: dict[str, dict] = {}
         self._inside_with = False
         self._dvcyaml = dvcyaml
         self._cache_images = cache_images
@@ -158,7 +156,7 @@ class Live:
         self._inside_dvc_exp: bool = False
         self._inside_dvc_pipeline: bool = False
         self._dvc_repo: Optional[Repo] = None
-        self._include_untracked: List[str] = []
+        self._include_untracked: list[str] = []
         if env2bool(env.DVCLIVE_TEST):
             self._init_test()
         else:
@@ -172,9 +170,9 @@ class Live:
             self._init_cleanup()
 
         self._latest_studio_step: int = self.step if resume else -1
-        self._studio_events_to_skip: Set[str] = set()
-        self._dvc_studio_config: Dict[str, Any] = {}
-        self._num_points_sent_to_studio: Dict[str, int] = {}
+        self._studio_events_to_skip: set[str] = set()
+        self._dvc_studio_config: dict[str, Any] = {}
+        self._num_points_sent_to_studio: dict[str, int] = {}
         self._studio_queue = None
         self._init_studio()
 
@@ -399,7 +397,7 @@ class Live:
         self,
         interval: float = 0.05,  # seconds
         num_samples: int = 20,
-        directories_to_monitor: Optional[Dict[str, str]] = None,
+        directories_to_monitor: Optional[dict[str, str]] = None,
     ) -> None:
         """Monitor GPU, CPU, ram, and disk resources and log them to DVC Live.
 
@@ -461,7 +459,7 @@ class Live:
     def log_metric(
         self,
         name: str,
-        val: Union[int, float, str],
+        val: Union[float, str],
         timestamp: bool = False,
         plot: bool = True,
     ):
@@ -509,7 +507,7 @@ class Live:
     def log_image(
         self,
         name: str,
-        val: "Union[np.ndarray, matplotlib.figure.Figure, PIL.Image.Image, StrPath]",
+        val: "Union[np.ndarray, mpl.figure.Figure, PIL.Image.Image, StrPath]",
     ):
         """
         Saves the given image `val` to the output file `name`.
@@ -571,7 +569,7 @@ class Live:
     def log_plot(
         self,
         name: str,
-        datapoints: "Union[pd.DataFrame, np.ndarray, List[Dict]]",
+        datapoints: "Union[pd.DataFrame, np.ndarray, list[dict]]",
         x: str,
         y: Union[str, list[str]],
         template: Optional[str] = "linear",
@@ -631,8 +629,8 @@ class Live:
     def log_sklearn_plot(
         self,
         kind: str,
-        labels: "Union[List, np.ndarray]",
-        predictions: "Union[List, Tuple, np.ndarray]",
+        labels: "Union[list, np.ndarray]",
+        predictions: "Union[list, tuple, np.ndarray]",
         name: Optional[str] = None,
         title: Optional[str] = None,
         x_label: Optional[str] = None,
@@ -704,7 +702,7 @@ class Live:
         except RepresenterError as exc:
             raise InvalidParameterTypeError(exc.args[0]) from exc
 
-    def log_params(self, params: Dict[str, ParamLike]):
+    def log_params(self, params: dict[str, ParamLike]):
         """
         On each `Live.log_params(params)` call, DVCLive will write keys/values pairs in
         the params dict to `{Live.dir}/params.yaml`:
@@ -746,8 +744,8 @@ class Live:
         type: Optional[str] = None,  # noqa: A002
         name: Optional[str] = None,
         desc: Optional[str] = None,
-        labels: Optional[List[str]] = None,
-        meta: Optional[Dict[str, Any]] = None,
+        labels: Optional[list[str]] = None,
+        meta: Optional[dict[str, Any]] = None,
         copy: bool = False,
         cache: bool = True,
     ):
