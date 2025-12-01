@@ -75,7 +75,7 @@ all = [
 ]
 dev = [
   "dvclive[image,tf,xgb,lgbm,huggingface,fastai,lightning,optuna,plots,markdown,tests]",
-  "mypy==1.18.2",
+  "mypy==1.19.0",
   "types-PyYAML"
 ]
 
