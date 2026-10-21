@@ -826,6 +826,12 @@ class Live:
 
     @catch_and_warn(DvcException, logger)
     def cache(self, path):
+        if self._dvc_repo is None:
+            logger.warning(
+                f"A DVC repo is required to cache files. Skipping `cache({path})`."
+            )
+            return
+
         if self._inside_dvc_pipeline:
             existing_stage = find_overlapping_stage(self._dvc_repo, path)
 
