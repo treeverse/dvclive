@@ -36,6 +36,7 @@ from .error import (
     InvalidDataTypeError,
     InvalidDvcyamlError,
     InvalidImageNameError,
+    InvalidMetricNameError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
     InvalidReportModeError,
@@ -484,6 +485,8 @@ class Live:
         Raises:
             `InvalidDataTypeError`: thrown if the provided `val` does not have a
                 supported type.
+            `InvalidMetricNameError`: thrown if a parent of the metric already has a
+                value in `Live.summary`, for example `epoch/loss` after `epoch`.
         """
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
@@ -495,13 +498,23 @@ class Live:
             metric = self._metrics[name]
         else:
             metric = Metric(name, self.plots_dir)
-            self._metrics[name] = metric
+
+        summary_keys = metric.summary_keys
+        parent = self.summary
+        for index, key in enumerate(summary_keys[:-1]):
+            if key not in parent:
+                break
+            parent = parent[key]
+            if not isinstance(parent, dict):
+                raise InvalidMetricNameError(name, "/".join(summary_keys[: index + 1]))
+
+        self._metrics[name] = metric
 
         metric.step = self.step
         if plot:
             metric.dump(val, timestamp=timestamp)
 
-        self.summary = set_in(self.summary, metric.summary_keys, val)
+        self.summary = set_in(self.summary, summary_keys, val)
         logger.debug(f"Logged {name}: {val}")
 
     def log_image(

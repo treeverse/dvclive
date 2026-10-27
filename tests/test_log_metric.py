@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from dvclive import Live
-from dvclive.error import InvalidDataTypeError
+from dvclive.error import DvcLiveError, InvalidDataTypeError
 from dvclive.plots import Metric
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics, parse_tsv
@@ -64,6 +64,66 @@ def test_nested_logging(tmp_dir):
     assert summary["train"]["m1"] == 1
     assert summary["val"]["val_1"]["m1"] == 1
     assert summary["val"]["val_1"]["m2"] == 1
+
+
+@pytest.mark.parametrize(
+    ("parent", "name"), [("epoch", "epoch/loss"), ("train/epoch", "train/epoch/loss")]
+)
+@pytest.mark.parametrize("val", [0, 1.0, "value"])
+@pytest.mark.parametrize("plot", [True, False])
+def test_log_metric_parent_conflict(tmp_dir, parent, name, val, plot):
+    live = Live("logs")
+    live.log_metric(parent, val)
+    summary = live.summary.copy()
+    history = {path: path.read_bytes() for path in tmp_dir.rglob("*.tsv")}
+
+    with pytest.raises(
+        DvcLiveError,
+        match=f"Cannot log metric '{name}': parent '{parent}' already has a value",
+    ):
+        live.log_metric(name, 0.5, plot=plot)
+
+    assert live.summary == summary
+    assert name not in live._metrics
+    assert {path: path.read_bytes() for path in tmp_dir.rglob("*.tsv")} == history
+
+
+def test_log_metric_resumed_parent_conflict(tmp_dir):
+    live = Live("logs")
+    live.log_metric("epoch", 0, plot=False)
+    live.make_summary()
+    resumed = Live("logs", resume=True)
+
+    with pytest.raises(DvcLiveError, match="parent 'epoch' already has a value"):
+        resumed.log_metric("epoch/loss", 0.5)
+
+    assert resumed.summary["epoch"] == 0
+    assert not list(tmp_dir.rglob("*.tsv"))
+
+
+def test_log_metric_step_parent_conflict(tmp_dir):
+    live = Live("logs")
+    live.next_step()
+
+    with pytest.raises(DvcLiveError, match="parent 'step' already has a value"):
+        live.log_metric("step/loss", 0.5)
+
+    assert live.summary["step"] == 0
+    assert not list(tmp_dir.rglob("*.tsv"))
+
+
+def test_log_metric_nested_updates(tmp_dir):
+    live = Live("logs")
+    live.log_metric("train/loss", 1)
+    live.log_metric("train/accuracy", 0.5)
+    live.log_metric("train/loss", 0.25)
+    live.log_metric("validation/loss", 0.75)
+    live.make_summary()
+
+    assert load_yaml(live.metrics_file) == {
+        "train": {"loss": 0.25, "accuracy": 0.5},
+        "validation": {"loss": 0.75},
+    }
 
 
 @pytest.mark.parametrize("timestamp", [True, False])

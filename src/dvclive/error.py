@@ -23,6 +23,13 @@ class InvalidImageNameError(DvcLiveError):
         super().__init__(f"Cannot log image with name '{name}'")
 
 
+class InvalidMetricNameError(DvcLiveError):
+    def __init__(self, name, parent):
+        super().__init__(
+            f"Cannot log metric '{name}': parent '{parent}' already has a value"
+        )
+
+
 class InvalidPlotTypeError(DvcLiveError):
     def __init__(self, name):
         from .plots import SKLEARN_PLOTS
