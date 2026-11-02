@@ -40,7 +40,8 @@ def dvc_repo(tmp_dir):
 
     Git.init(tmp_dir)
     repo = Repo.init(tmp_dir)
-    repo.scm.add_commit(".", "init")
+    # adding "." with dulwich would also stage the files inside `.git`
+    repo.scm.add_commit([".dvc", ".dvcignore"], "init")
     return repo
 
 

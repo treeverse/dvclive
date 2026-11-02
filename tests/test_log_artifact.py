@@ -103,6 +103,19 @@ def test_log_artifact_copy(tmp_dir, dvc_repo):
     }
 
 
+def test_log_artifact_copy_is_not_committed_to_exp(tmp_dir, dvc_repo):
+    (tmp_dir / "model.pth").write_text("weights")
+
+    with Live() as live:
+        live.log_metric("foo", 1)
+        live.log_artifact("model.pth", type="model", copy=True)
+
+    fs = dvc_repo.scm.get_fs(live._experiment_rev)
+    assert fs.exists("dvclive/metrics.json")
+    assert fs.exists("dvclive/artifacts/model.pth.dvc")
+    assert not fs.exists("dvclive/artifacts/model.pth")
+
+
 def test_log_artifact_copy_overwrite(tmp_dir, dvc_repo):
     (tmp_dir / "model.pth").touch()
 

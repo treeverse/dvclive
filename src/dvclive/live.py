@@ -27,6 +27,7 @@ from ruamel.yaml.representer import RepresenterError
 from . import env
 from .dvc import (
     ensure_dir_is_tracked,
+    exclude_dvc_outs,
     find_overlapping_stage,
     get_dvc_repo,
     get_exp_name,
@@ -1020,9 +1021,18 @@ class Live:
         if self._save_dvc_exp:
             if self._dvcyaml:
                 self._include_untracked.append(self.dvc_file)
+            # DVC force-adds these paths, ignoring `.gitignore`, so the data of DVC
+            # outputs inside `self.dir`, like artifacts logged with `copy=True`,
+            # would be committed to Git along with their `.dvc` files.
+            include_untracked = []
+            for path in self._include_untracked:
+                if path == self.dir:
+                    include_untracked.extend(exclude_dvc_outs(path, self._dvc_repo))
+                else:
+                    include_untracked.append(path)
             self._experiment_rev = self._dvc_repo.experiments.save(
                 name=self._exp_name,
-                include_untracked=self._include_untracked,
+                include_untracked=include_untracked,
                 force=True,
                 message=self._exp_message,
             )

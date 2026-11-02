@@ -181,3 +181,17 @@ def ensure_dir_is_tracked(directory: str, dvc_repo: "Repo") -> None:
     ]
     if paths_to_track:
         dvc_repo.scm.add(paths_to_track)
+
+
+def exclude_dvc_outs(directory: str, dvc_repo: "Repo") -> list[str]:
+    """Return `[directory]`, or its files outside DVC outputs if it contains any."""
+    outs = [Path(str(o)) for o in dvc_repo.index.outs]
+    if not any(out.is_relative_to(directory) for out in outs):
+        return [directory]
+
+    files = (
+        os.path.join(root, file)
+        for root, _, files in os.walk(directory)
+        for file in files
+    )
+    return [f for f in files if not any(Path(f).is_relative_to(o) for o in outs)]
