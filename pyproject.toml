@@ -19,8 +19,8 @@ keywords = [
 ]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-maintainers = [{name = "Iterative", email = "support@dvc.org"}]
-authors = [{name = "Iterative", email = "support@dvc.org"}]
+maintainers = [{ name = "Iterative", email = "support@dvc.org" }]
+authors = [{ name = "Iterative", email = "support@dvc.org" }]
 requires-python = ">=3.9"
 classifiers = [
   "Development Status :: 4 - Beta",
