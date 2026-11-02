@@ -132,6 +132,28 @@ def test_dvc_outs_are_not_added(tmp_dir, mocked_dvc_repo, monkeypatch):
     live._dvc_repo.scm.add.assert_any_call(["dvclive/metrics.json"])
 
 
+def test_dvc_outs_are_not_included_in_exp_save(tmp_dir, mocked_dvc_repo):
+    artifact = os.path.join("dvclive", "artifacts", "model.pth")
+    mocked_dvc_repo.index.outs = [artifact]
+    (tmp_dir / artifact).parent.mkdir(parents=True)
+    (tmp_dir / artifact).touch()
+
+    with Live() as live:
+        live.log_metric("foo", 1)
+        live.next_step()
+
+    include_untracked = mocked_dvc_repo.experiments.save.call_args.kwargs[
+        "include_untracked"
+    ]
+    assert sorted(include_untracked) == sorted(
+        [
+            os.path.join("dvclive", "metrics.json"),
+            os.path.join("dvclive", "plots", "metrics", "foo.tsv"),
+            "dvc.yaml",
+        ]
+    )
+
+
 def test_errors_on_git_add_are_catched(tmp_dir, mocked_dvc_repo, monkeypatch):
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
