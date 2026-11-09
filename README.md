@@ -55,7 +55,6 @@ from dvclive import Live
 params = {"learning_rate": 0.002, "optimizer": "Adam", "epochs": 20}
 
 with Live() as live:
-
     # log a parameters
     for param in params:
         live.log_param(param, params[param])
@@ -64,8 +63,8 @@ with Live() as live:
     offset = random.uniform(0.2, 0.1)
     for epoch in range(1, params["epochs"]):
         fuzz = random.uniform(0.01, 0.1)
-        accuracy = 1 - (2 ** - epoch) - fuzz - offset
-        loss = (2 ** - epoch) + fuzz + offset
+        accuracy = 1 - (2**-epoch) - fuzz - offset
+        loss = (2**-epoch) + fuzz + offset
 
         # log metrics to studio
         live.log_metric("accuracy", accuracy)
