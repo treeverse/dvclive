@@ -1,9 +1,14 @@
+import logging
 from pathlib import Path
 from typing import Optional, Union
 
+from dvclive.error import InvalidDataTypeError
 from dvclive.serialize import dump_json
+from dvclive.utils import convert_datapoints_to_list_of_dicts
 
 from .base import Data
+
+logger = logging.getLogger(__name__)
 
 
 class CustomPlot(Data):
@@ -45,6 +50,52 @@ class CustomPlot(Data):
     @staticmethod
     def could_log(val: object) -> bool:
         return isinstance(val, list) and all(isinstance(x, dict) for x in val)
+
+    def prepare_datapoints(self, datapoints) -> list[dict]:
+        config = self.plot_config
+        template = config.get("template")
+        horizontal = template in ("bar_horizontal", "bar_horizontal_sorted")
+        x, y = config["x"], config["y"]
+        if horizontal and isinstance(datapoints, dict):
+            if not isinstance(y, str) or x == y:
+                msg = "Horizontal bar mappings require distinct x and y field names."
+                raise ValueError(msg)
+            records = [{y: label, x: value} for label, value in datapoints.items()]
+        else:
+            records = convert_datapoints_to_list_of_dicts(datapoints)
+
+        if not CustomPlot.could_log(records):
+            raise InvalidDataTypeError(self.name, type(records))
+
+        if horizontal and records:
+            self._check_bar_lengths(records, x, template)
+        return records
+
+    def _check_bar_lengths(self, records, x, template):
+        # JSON object keys become strings, including integer array column indices.
+        values = (
+            value for row in records for field, value in row.items() if str(field) == x
+        )
+        found = False
+        for value in values:
+            found = True
+            if value is None:
+                continue
+            try:
+                float(value)
+            except (TypeError, ValueError, OverflowError):
+                logger.warning(
+                    "Plot %r uses %s, which expects numeric values for x field %r. "
+                    "Check that x contains bar lengths and y contains labels.",
+                    self.name,
+                    template,
+                    x,
+                )
+                return
+        if not found:
+            logger.warning(
+                "Plot %r uses %s, but no row has x field %r.", self.name, template, x
+            )
 
     @property
     def plot_config(self):
