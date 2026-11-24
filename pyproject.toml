@@ -65,16 +65,17 @@ tests = [
 mmcv = ["mmcv"]
 tf = ["tensorflow"]
 xgb = ["xgboost"]
+catboost = ["catboost"]
 lgbm = ["lightgbm"]
 huggingface = ["transformers", "datasets"]
 fastai = ["fastai"]
 lightning = ["lightning>=2.0", "torch", "jsonargparse[signatures]>=4.26.1"]
 optuna = ["optuna"]
 all = [
-  "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,fastai,lightning,optuna,plots,markdown]"
+  "dvclive[image,mmcv,tf,xgb,catboost,lgbm,huggingface,fastai,lightning,optuna,plots,markdown]"
 ]
 dev = [
-  "dvclive[image,tf,xgb,lgbm,huggingface,fastai,lightning,optuna,plots,markdown,tests]",
+  "dvclive[image,tf,xgb,catboost,lgbm,huggingface,fastai,lightning,optuna,plots,markdown,tests]",
   "mypy==1.18.2",
   "types-PyYAML"
 ]
