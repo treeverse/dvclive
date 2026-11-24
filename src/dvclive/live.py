@@ -49,7 +49,6 @@ from .utils import (
     StrPath,
     catch_and_warn,
     clean_and_copy_into,
-    convert_datapoints_to_list_of_dicts,
     env2bool,
     inside_notebook,
     matplotlib_installed,
@@ -569,7 +568,7 @@ class Live:
     def log_plot(
         self,
         name: str,
-        datapoints: "Union[pd.DataFrame, np.ndarray, list[dict]]",
+        datapoints: "Union[pd.DataFrame, np.ndarray, list[dict], dict]",
         x: str,
         y: Union[str, list[str]],
         template: Optional[str] = "linear",
@@ -585,8 +584,8 @@ class Live:
 
         Args:
             name (StrPath): name of the output file.
-            datapoints (pd.DataFrame | np.ndarray | List[Dict]): Pandas DataFrame, Numpy
-                Array or List of dictionaries containing the data for the plot.
+            datapoints (pd.DataFrame | np.ndarray | list[dict] | dict): Plot records.
+                Horizontal bar plots also accept a dictionary of y labels and x values.
             x (str): name of the key (present in the dictionaries) to use as the x axis.
             y (str | list[str]): name of the key or keys (present in the
                 dictionaries) to use the y axis.
@@ -601,12 +600,6 @@ class Live:
             `InvalidDataTypeError`: thrown if the provided `datapoints` does not have a
                 supported type.
         """
-        # Convert the given datapoints to List[Dict]
-        datapoints = convert_datapoints_to_list_of_dicts(datapoints=datapoints)
-
-        if not CustomPlot.could_log(datapoints):
-            raise InvalidDataTypeError(name, type(datapoints))
-
         if name in self._plots:
             plot = self._plots[name]
         else:
@@ -620,10 +613,10 @@ class Live:
                 x_label=x_label,
                 y_label=y_label,
             )
-            self._plots[name] = plot
-
+        records = plot.prepare_datapoints(datapoints)
+        self._plots[name] = plot
         plot.step = self.step
-        plot.dump(datapoints)
+        plot.dump(records)
         logger.debug(f"Logged {name}")
 
     def log_sklearn_plot(
